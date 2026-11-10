@@ -1,0 +1,11 @@
+image: n132/arvo:10400-vul
+graphicsmagick hg: f98187e88212+
+CC: clang version 7.0.0 (trunk 331747)
+CFLAGS: -O2 -fno-inline -g -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+harness: fuzzing/coder_fuzzer.cc -DFUZZ_GRAPHICSMAGICK_CODER=MNG -DFUZZ_GRAPHICSMAGICK_CODER_WRITE=1 + StandaloneFuzzTargetMain.c
+target symbol: mng_get_long
+target addr: 0x4b7880
+sha256 target.debug: abad050715ca854a48542c12a1d6d19a4cedc8fe978471290d8eb9cf66c6488a
+sha256 target: 1e9c3af58944af95b2a6f07c37b07f4015f23b5822e0e50b81622e08ad823ad1
+file: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, stripped
+built: 2026-11-10T14:21:51+09:00
