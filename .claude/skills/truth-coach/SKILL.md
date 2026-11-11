@@ -19,7 +19,7 @@ argument-hint: <task id, 예: 10400>
 ## 시작할 때
 1. 조용히 자료를 확인한다 (사용자에게 내용은 말하지 않는다):
    `truth/$ARGUMENTS/` (truth.json, description.txt, error.txt, patch.diff, build_info.txt),
-   WSL `~/src/$ARGUMENTS/` (소스, `\\wsl$\Ubuntu-26.04\home\yh\src\$ARGUMENTS\`), `.claude/rules/truth.md` (형식·채점 규칙).
+   `~/src/$ARGUMENTS/` (소스. Windows 에서 볼 때 `\\wsl$\Ubuntu-26.04\home\yh\src\$ARGUMENTS\`), `.claude/rules/truth.md` (형식·채점 규칙).
 2. truth.json에서 이미 채워진 부분과 TODO를 파악한다.
 3. 사용자에게 지금 어느 단계부터 할지, 이미 알고 있는 것이 무엇인지 묻는다.
 

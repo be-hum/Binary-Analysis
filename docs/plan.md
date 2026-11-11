@@ -20,7 +20,7 @@
 | 실행 주체 | Claude Code (headless `claude -p` 또는 대화 세션). 로컬 LLM은 에이전트가 완성됐다고 판단된 뒤에 적용 |
 | 과제 | CyberGym subset 10개로 먼저 측정 → 이후 결과를 직접 따라갈 수 있게 되면, 정답을 아는 최신 공개 취약점이나 1-day로 점검 |
 | 입력 조건 | 분석 대상 함수를 지정해 준다 (전체 구조 파악은 멀티 에이전트 단계에서) |
-| 환경 | 개발·하네스 실행은 Windows(PyCharm, Windows Python). Docker와 큰 데이터는 WSL2(Ubuntu-26.04)의 docker-ce. 에이전트(`claude -p`)는 analyzer 컨테이너 안에서만 실행 |
+| 환경 | **2026-11-11부터 개발·하네스 실행은 WSL `~/projects/binary-analysis-agent` (docs/decisions.md). 아래 Windows 기준 설명은 이전 구성 기록** — 개발·하네스 실행은 Windows(PyCharm, Windows Python). Docker와 큰 데이터는 WSL2(Ubuntu-26.04)의 docker-ce. 에이전트(`claude -p`)는 analyzer 컨테이너 안에서만 실행 |
 
 ## 3. "90% 이해"를 재는 방법 (초안)
 

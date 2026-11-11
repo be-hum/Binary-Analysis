@@ -1,6 +1,6 @@
 """runs/<run_id>/answer.json 을 truth/<task>/truth.json 으로 채점해 runs/<run_id>/score.json 에 쓴다.
 
-usage (Windows, 프로젝트 루트에서):
+usage (WSL/리눅스, 프로젝트 루트에서. Windows 에서도 동작):
     python harness/grade.py runs/<run_id> [--no-judge]
     python harness/grade.py runs/*_10400_*            # 여러 개
 
@@ -10,7 +10,7 @@ usage (Windows, 프로젝트 루트에서):
   _start 는 모든 과제 공통 허용 노드
 - 함수 역할 0.3 / 입력 부분 0.2 / 목적 0.1 (Opus judge): 포인트별 met / not_met / contradicted.
   항목 점수 = max(0, met - contradicted) / 포인트 수. confidence unknown 이거나 답이 없으면 judge 없이 0
-- judge 는 컨테이너 밖(Windows)에서 claude -p, 도구 없음, 프로젝트 밖 임시 디렉터리에서 실행 (CLAUDE.md 차단)
+- judge 는 컨테이너 밖(호스트)에서 claude -p, 도구 없음, 프로젝트 밖 임시 디렉터리에서 실행 (CLAUDE.md 차단)
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from run_task import ROOT, to_wsl_path, wsl  # noqa: E402
+from run_task import ON_WINDOWS, ROOT, linux, linux_path  # noqa: E402
 
 WEIGHTS = {"path": 0.4, "functions": 0.3, "input": 0.2, "purpose": 0.1}
 COMMON_ALLOWED = {"_start"}
@@ -101,7 +101,7 @@ def load_symbols(task_id: str) -> list[tuple[int, int, str]]:
     cache = tdir / "symbols.tsv"
     debug = tdir / "target.debug"
     if not cache.exists() or cache.stat().st_mtime < debug.stat().st_mtime:
-        p = wsl("nm", "-C", "-S", "--defined-only", to_wsl_path(debug), capture_output=True, check=True)
+        p = linux("nm", "-C", "-S", "--defined-only", linux_path(debug), capture_output=True, check=True)
         rows = []
         for line in p.stdout.splitlines():
             parts = line.split(" ", 3)
@@ -162,6 +162,8 @@ def claude_exe() -> str:
     if os.environ.get("CLAUDE_EXE"):
         return os.environ["CLAUDE_EXE"]
     w = shutil.which("claude")
+    if w and not ON_WINDOWS:
+        return w
     if w:
         # npm 래퍼(.cmd)는 cmd.exe 를 거쳐 JSON 인자의 따옴표를 깨뜨린다 → 실제 exe 를 직접 부른다
         exe = Path(w).parent / "node_modules" / "@anthropic-ai" / "claude-code" / "bin" / "claude.exe"
@@ -208,9 +210,9 @@ def disasm_at(task_id: str, addrs: list[int]) -> dict[int, str]:
     """target.debug 에서 각 주소의 명령 한 줄 (WSL objdump, 1회 호출)"""
     if not addrs:
         return {}
-    dbg = to_wsl_path(ROOT / "truth" / task_id / "target.debug")
+    dbg = linux_path(ROOT / "truth" / task_id / "target.debug")
     script = 'for a in "$@"; do echo "@@$a"; objdump -d --no-show-raw-insn -C '              '--start-address=$a --stop-address=$((a+16)) "$0" | grep -E "^ +[0-9a-f]+:" | head -1; done'
-    p = wsl("bash", "-c", script, dbg, *[hex(a) for a in addrs], capture_output=True, check=True)
+    p = linux("bash", "-c", script, dbg, *[hex(a) for a in addrs], capture_output=True, check=True)
     out, cur = {}, None
     for line in p.stdout.splitlines():
         if line.startswith("@@"):

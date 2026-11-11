@@ -5,7 +5,8 @@
 - 다음 할 일:
   - 방향 전환(2026-11-11): 진단 중심 채점. 스키마 `calls_next_at`/`evidence`, 호출 지점 코드 검증, failure_type, gate_ok, human.json 양식 구현
   - 10400 정답지: Claude 초안(예외) → 사용자 확인 (main·LLVMFuzzerTestOneInput 포인트는 coder_fuzzer.cc로 확인 필요)
+  - 2026-11-11 WSL 이전: 저장소 `~/projects/binary-analysis-agent` (origin github.com/be-hum/Binary-Analysis main), 하네스 직접 실행으로 수정, 기존 run 재채점 결과 동일
   - baseline 10400 새 스키마 1회 완료 (`runs/20261111-154853_10400_baseline_1`): total 0.757, 경로 1.0, input 0 (pHYs 경로 선택 — 정답지는 LOOP) → 과제에 호출 지점 0x4b1456 추가, 재실행 필요. human.json 직접 채점 → judge 비교
   - 368·1065 재빌드(`scripts/rebuild/<id>.sh`), 정답지 2개
   - judge 보정: 3과제 직접 채점과 비교
-- 막힌 것: 없음
+- 막힌 것: WSL 셸에 `CLAUDE_CODE_OAUTH_TOKEN` 미설정 (사용자) → 설정 후 `scripts/smoke_test.sh`, baseline 1회로 이전 확인

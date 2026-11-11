@@ -30,3 +30,4 @@
 | 2026-11-11 | 단계 기준(잠정): run마다 gate_ok = total ≥ 0.9 이고 wrong_claim·misattributed·잘못된 호출 지점 0건, 같은 조건 3회 모두 gate_ok면 통과 | 사용자가 판단 기준이 생길 때까지 고정. 점수가 높아도 틀린 주장이 있으면 통과시키지 않음 (환각 억제가 목표) |
 | 2026-11-11 | 10400 input 포인트에서 버퍼 초과 읽기(버그 조건) 문장 제거 | 평가 대상은 취약점 탐지가 아니라 대상 함수까지의 입력 이해 |
 | 2026-11-11 | 과제에 대상 함수 주소와 함께 "관심 호출 지점"(크래시 스택 #1 줄의 call 주소)을 준다. 정답지 `target.call_site`, 채점기가 답안 마지막 단계 `calls_next_at`과 대조 | 대상 함수에 닿는 경로가 여러 개(mng_get_long 호출 약 30곳)라 주소만 주면 정답 경로가 정해지지 않음. baseline 2회차가 pHYs 경로를 골라 input 0점 |
+| 2026-11-11 | 개발·하네스 실행을 WSL(`~/projects/binary-analysis-agent`)로 이전, 저장소 github.com/be-hum/Binary-Analysis (main). 2026-11-09 Windows 결정을 대체 | 실행되는 것(docker·Ghidra headless·재빌드·nm/objdump)이 전부 리눅스라 wsl.exe 경유·cp949·.cmd 래퍼·WSLENV 문제가 반복됨. 이식성은 `harness/run_task.py`의 `linux()`/`linux_path()`에만 남겨, Windows로 옮길 때 그 두 함수만 본다. Ghidra GUI는 `\wsl$`로 Windows에서 연다 |

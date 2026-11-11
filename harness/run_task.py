@@ -1,6 +1,6 @@
 """analyzer 컨테이너에서 평가 대상 에이전트(claude -p)를 한 번 이상 실행하고 runs/<run_id>/ 에 기록한다.
 
-usage (Windows, 프로젝트 루트에서):
+usage (WSL/리눅스, 프로젝트 루트에서. Windows 에서도 동작):
     python harness/run_task.py 10400 --condition baseline --k 3
 
 runs/<run_id>/
@@ -33,18 +33,25 @@ IMAGE = "analyzer"
 PROXY = "http://egress:8888"
 
 
-def to_wsl_path(p: Path) -> str:
-    """C:\\Users\\... -> /mnt/c/Users/... (공백은 그대로, 인자 리스트로 넘기므로 따옴표 불필요)"""
+# 이식성: 리눅스 도구(docker, nm, objdump)를 부르는 곳은 아래 두 함수뿐이다.
+# 리눅스(WSL)에서는 직접 실행하고, Windows 에서는 wsl.exe 를 거친다 (docs/decisions.md 2026-11-11)
+ON_WINDOWS = os.name == "nt"
+
+
+def linux_path(p: Path) -> str:
+    """리눅스 쪽에서 본 경로. Windows 면 C:\\Users\\... -> /mnt/c/Users/..."""
     p = p.resolve()
+    if not ON_WINDOWS:
+        return str(p)
     drive = p.drive.rstrip(":").lower()
     rest = p.as_posix().split(":", 1)[1]
     return f"/mnt/{drive}{rest}"
 
 
-def wsl(*args: str, **kw) -> subprocess.CompletedProcess:
-    # --exec: 로그인 셸(zsh)을 거치지 않고 인자를 그대로 넘긴다
-    return subprocess.run(["wsl.exe", "-d", DISTRO, "--exec", *args],
-                          encoding="utf-8", errors="replace", **kw)
+def linux(*args: str, **kw) -> subprocess.CompletedProcess:
+    # Windows: --exec 로 로그인 셸(zsh)을 거치지 않고 인자를 그대로 넘긴다
+    cmd = ["wsl.exe", "-d", DISTRO, "--exec", *args] if ON_WINDOWS else list(args)
+    return subprocess.run(cmd, encoding="utf-8", errors="replace", **kw)
 
 
 def load_condition(name: str) -> dict:
@@ -110,20 +117,21 @@ def run_once(task_id: str, cond: dict, run_id: str) -> dict:
         "-e", f"MODEL={cond['model']}",
         "-e", f"ANSWER_SCHEMA={schema}",
         "-e", f"DISALLOWED={','.join(cond['disallowed_tools'])}",
-        "-v", f"{to_wsl_path(task_dir)}:/work:ro",
+        "-v", f"{linux_path(task_dir)}:/work:ro",
         IMAGE, "bash", "-c", claude_cmd,
     ]
 
     env = dict(os.environ)
     if not env.get("CLAUDE_CODE_OAUTH_TOKEN"):
-        sys.exit("CLAUDE_CODE_OAUTH_TOKEN 이 없습니다 (Windows 사용자 환경 변수 확인 후 터미널 재시작)")
-    env["WSLENV"] = ":".join(filter(None, [env.get("WSLENV", ""), "CLAUDE_CODE_OAUTH_TOKEN/u"]))
+        sys.exit("CLAUDE_CODE_OAUTH_TOKEN 이 없습니다 (셸 환경 변수 확인)")
+    if ON_WINDOWS:
+        env["WSLENV"] = ":".join(filter(None, [env.get("WSLENV", ""), "CLAUDE_CODE_OAUTH_TOKEN/u"]))
 
     started = dt.datetime.now().astimezone()
     t0 = time.monotonic()
     timed_out = False
     try:
-        proc = wsl(*docker, input=cond["prompt"], capture_output=True,
+        proc = linux(*docker, input=cond["prompt"], capture_output=True,
                    timeout=cond["timeout_sec"], env=env)
         stdout, stderr, rc = proc.stdout, proc.stderr, proc.returncode
     except subprocess.TimeoutExpired as e:
@@ -131,7 +139,7 @@ def run_once(task_id: str, cond: dict, run_id: str) -> dict:
         stdout = e.stdout.decode("utf-8", "replace") if isinstance(e.stdout, bytes) else (e.stdout or "")
         stderr = e.stderr.decode("utf-8", "replace") if isinstance(e.stderr, bytes) else (e.stderr or "")
         rc = None
-        wsl("docker", "rm", "-f", run_id, capture_output=True)  # wsl.exe 만 죽으면 컨테이너가 남는다
+        linux("docker", "rm", "-f", run_id, capture_output=True)  # 클라이언트만 죽으면 컨테이너가 남는다
     elapsed = time.monotonic() - t0
 
     (out_dir / "transcript.jsonl").write_text(stdout, encoding="utf-8")
