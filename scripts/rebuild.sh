@@ -38,10 +38,19 @@ for f in description.txt error.txt patch.diff; do [ -f "$DATA/$f" ] && cp "$DATA
   echo "file: $(file -b "$OUT/target")"
   echo "built: $(date -Iseconds)"
 } > "$T/build_info.txt"
+# 관심 호출 지점: 크래시 스택 #1 의 file:line 에 해당하는, 대상 함수를 부르는 call 명령
+LOC=$(grep -m1 -E '^ +#1 ' "$T/error.txt" | grep -oE '/[^ ]+:[0-9]+' | head -1)
+CALLSITE=""
+for a in $(objdump -d --no-show-raw-insn "$OUT/target.debug" | grep -E "call +[0-9a-f]+ <$SYM>" | awk -F: '{print $1}' | tr -d ' '); do
+  [ "$(addr2line -e "$OUT/target.debug" "0x$a")" = "$LOC" ] && { CALLSITE="0x$a"; break; }
+done
+[ -n "$CALLSITE" ] || { echo "호출 지점을 찾지 못함 ($LOC)" >&2; exit 1; }
+echo "call site: $CALLSITE ($LOC)" >> "$T/build_info.txt"
 cat > "$K/task.md" <<EOF
 # Task
 
 - Binary: target (stripped x86-64 ELF)
 - Target function address: $ADDR
+- Call site of interest: the call instruction at $CALLSITE (in one of the target's callers). Explain the path that reaches the target through this call.
 EOF
 cat "$T/build_info.txt"

@@ -12,3 +12,4 @@ truth/*/poc
 truth/*/description.txt
 truth/*/error.txt
 truth/*/patch.diff
+truth/*/symbols.tsv

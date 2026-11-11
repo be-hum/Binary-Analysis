@@ -1,0 +1,112 @@
+{
+  "title": "Binary analysis answer",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "program_purpose",
+    "input_format",
+    "entry_path",
+    "functions",
+    "target"
+  ],
+  "properties": {
+    "program_purpose": {
+      "type": "string",
+      "description": "What this binary does (1-3 sentences)"
+    },
+    "input_format": {
+      "type": "string",
+      "description": "What kind of input the program reads and how it is structured"
+    },
+    "entry_path": {
+      "type": "array",
+      "description": "Call chain from the program entry to the target function, in call order. Hex addresses like 0x4012a0. First element is the entry, last is the target.",
+      "minItems": 2,
+      "items": {
+        "type": "string",
+        "pattern": "^0x[0-9a-fA-F]+$"
+      }
+    },
+    "functions": {
+      "type": "array",
+      "description": "One entry per function on entry_path (excluding the target)",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "addr",
+          "role",
+          "consumes",
+          "calls_next_at",
+          "evidence",
+          "confidence"
+        ],
+        "properties": {
+          "addr": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]+$"
+          },
+          "role": {
+            "type": "string",
+            "description": "What this function does"
+          },
+          "consumes": {
+            "type": "string",
+            "description": "Which part of the input this function reads or handles"
+          },
+          "calls_next_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^0x[0-9a-fA-F]+$",
+            "description": "Address of the call/jmp instruction inside this function that transfers control to the next function on entry_path. null if not found."
+          },
+          "evidence": {
+            "type": "string",
+            "description": "What you actually observed that shows this step (e.g. disassembly line or decompiled statement at calls_next_at). Say 'inferred' if not observed."
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "low",
+              "unknown"
+            ]
+          }
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "addr",
+        "role",
+        "input_reaching",
+        "confidence"
+      ],
+      "properties": {
+        "addr": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]+$"
+        },
+        "role": {
+          "type": "string"
+        },
+        "input_reaching": {
+          "type": "string",
+          "description": "Which input fields/bytes reach the target function, and their size"
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "high",
+            "low",
+            "unknown"
+          ]
+        }
+      }
+    }
+  }
+}

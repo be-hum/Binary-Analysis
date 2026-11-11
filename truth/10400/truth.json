@@ -1,0 +1,58 @@
+{
+  "task": "arvo:10400",
+  "target": { "symbol": "mng_get_long", "addr": "0x4b7880", "call_site": "0x4b1456" },
+
+  "path": {
+    "required": [
+      "main",
+      "LLVMFuzzerTestOneInput",
+      "Magick::Image::read(Magick::Blob const&)",
+      "BlobToImage",
+      "ReadImage",
+      "ReadMNGImage",
+      "mng_get_long"
+    ],
+    "allowed": []
+  },
+
+  "purpose": {
+    "points": [
+      "프로그램은 GraphicsMagick(또는 ImageMagick 계열) 이미지 라이브러리의 퍼징 하네스다",
+      "입력 파일 전체를 MNG 형식 이미지로 해석해 디코딩(읽기)한다"
+    ]
+  },
+
+  "functions": {
+    "main": { "points": [
+      "명령줄로 받은 입력 파일을 메모리로 읽어 LLVMFuzzerTestOneInput에 (데이터, 크기)로 넘긴다"
+    ]},
+    "LLVMFuzzerTestOneInput": { "points": [
+      "입력 바이트를 Blob으로 감싸 이미지 형식을 MNG로 지정하고 Image::read로 디코딩한다"
+    ]},
+    "Magick::Image::read(Magick::Blob const&)": { "points": [
+      "C++ 래퍼로, Blob 데이터를 C API BlobToImage에 넘겨 이미지를 읽는다"
+    ]},
+    "BlobToImage": { "points": [
+      "메모리 Blob을 이미지 읽기용 입력으로 연결하고 ReadImage를 호출한다"
+    ]},
+    "ReadImage": { "points": [
+      "지정된(또는 판별된) 형식에 맞는 디코더를 찾아 호출한다 — 여기서는 MNG 디코더 ReadMNGImage"
+    ]},
+    "ReadMNGImage": { "points": [
+      "MNG 시그니처(8바이트)를 확인한 뒤 청크를 [길이 4바이트][타입 4바이트][데이터] 단위로 반복해 읽는다",
+      "청크 데이터를 길이만큼 힙에 할당한 버퍼에 읽어 청크 타입별로 처리한다",
+      "LOOP 청크에서 데이터 첫 바이트를 loop_level로, 이어지는 4바이트를 mng_get_long으로 반복 횟수로 읽는다"
+    ]},
+    "mng_get_long": { "points": [
+      "주어진 포인터에서 4바이트를 빅엔디언 정수로 읽어 반환한다"
+    ]}
+  },
+
+  "input": {
+    "points": [
+      "입력은 MNG 시그니처 8바이트(8A 4D 4E 47 0D 0A 1A 0A)로 시작해야 한다",
+      "대상 함수에 닿는 것은 타입이 'LOOP'인 청크이며, 그 청크 데이터의 오프셋 1부터 4바이트(반복 횟수 필드)가 mng_get_long에 들어간다",
+      "LOOP 청크의 길이 필드(데이터 크기)가 1 이상이어야 이 mng_get_long 호출에 도달한다"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "baseline",
+  "description": "M1 무지침 기준선: 과제 설명 + 도구 위치만. 분석 방법은 알려주지 않는다",
+  "model": "claude-sonnet-5-5",
+  "timeout_sec": 1800,
+  "prompt_file": "baseline.prompt.md",
+  "disallowed_tools": ["WebSearch", "WebFetch"],
+  "extra_args": []
+}
